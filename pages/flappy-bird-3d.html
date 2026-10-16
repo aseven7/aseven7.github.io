@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a0f">
+<title>Flappy Cardinal 3D — Games Collection</title>
+<style>
+  /* ===== STANDARD.GHP — STYLE TETAP ===== */
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+  :root{
+    --bg:#0a0a0f;
+    --text:#e0e0e6;
+    --text2:#a0a0b0;
+    --accent:#8b5cf6;
+    --accent-hover:#a78bfa;
+    --radius:8px;
+  }
+
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;
+    line-height:1.7;
+    min-height:100vh;
+    padding:1rem;
+  }
+
+  h1{
+    font-size:clamp(1.75rem,4vw,2.5rem);
+    background:linear-gradient(135deg,#a78bfa,#6d28d9);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+    color:transparent;
+    line-height:1.2;
+    margin-bottom:.5rem;
+    font-weight:900;
+    letter-spacing:.5px;
+  }
+
+  .back-link{
+    display:inline-block;
+    color:var(--accent);
+    text-decoration:none;
+    font-weight:600;
+    font-size:.95rem;
+    margin-bottom:1rem;
+    transition:color .2s;
+  }
+  .back-link:hover{color:var(--accent-hover)}
+
+  .lead{
+    color:var(--text2);
+    margin-bottom:1.5rem;
+    max-width:65ch;
+  }
+
+  main{display:block}
+
+  img,video,iframe{
+    max-width:100%;
+    height:auto;
+    display:block;
+  }
+
+  footer{
+    margin-top:2.5rem;
+    padding-top:1rem;
+    border-top:1px solid rgba(139,92,246,.2);
+    color:var(--text2);
+    font-size:.875rem;
+    text-align:center;
+  }
+
+  @media (min-width:640px){
+    body{padding:1.5rem}
+  }
+  @media (min-width:1024px){
+    body{padding:2rem}
+    main{max-width:960px;margin:0 auto}
+  }
+
+  /* ===== GAME WRAPPER ===== */
+  .game-wrap{
+    position:relative;
+    width:min(100%,640px,calc(78vh * 3 / 4));
+    aspect-ratio:3 / 4;
+    margin:0 auto;
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:#8fd3f4;
+    box-shadow:0 10px 40px rgba(139,92,246,.3),
+               0 0 0 1px rgba(139,92,246,.2);
+    touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
+    font-family:"Trebuchet MS",Verdana,system-ui,sans-serif;
+  }
+  .game-wrap canvas{
+    width:100%;
+    height:100%;
+    display:block;
+    max-width:none;
+  }
+
+  #hud{
+    position:absolute;inset:0;
+    pointer-events:none;z-index:10;
+  }
+  #score{
+    position:absolute;top:14px;left:0;right:0;
+    text-align:center;
+    font-size:clamp(38px,11vw,72px);
+    font-weight:900;color:#fff;
+    text-shadow:0 4px 0 rgba(0,0,0,.28),0 8px 22px rgba(0,0,0,.35);
+    opacity:0;
+    transition:opacity .25s, transform .11s;
+    letter-spacing:2px;
+  }
+  #score.show{opacity:1}
+
+  .panel{
+    position:absolute;inset:0;z-index:20;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:16px;text-align:center;padding:20px;
+    pointer-events:none;
+  }
+  .panel.hidden{display:none}
+
+  .title{
+    font-size:clamp(26px,8vw,52px);
+    font-weight:900;color:#fff;letter-spacing:1px;line-height:1.05;
+    text-shadow:0 4px 0 #c92a2a,0 8px 0 rgba(0,0,0,.18),0 14px 28px rgba(0,0,0,.35);
+  }
+  .title small{
+    display:block;font-size:.42em;letter-spacing:6px;margin-top:6px;
+    text-shadow:0 3px 0 rgba(0,0,0,.3);
+  }
+
+  .sub{
+    font-size:clamp(12px,3.4vw,16px);
+    color:#fff;font-weight:700;
+    background:rgba(0,0,0,.3);
+    padding:8px 18px;border-radius:999px;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    box-shadow:0 6px 18px rgba(0,0,0,.2);
+  }
+
+  .tap{
+    font-size:clamp(15px,4.6vw,22px);
+    font-weight:900;color:#fff;
+    text-shadow:0 3px 10px rgba(0,0,0,.55);
+    animation:pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{transform:scale(1);opacity:.85}
+    50%{transform:scale(1.1);opacity:1}
+  }
+
+  .card{
+    background:rgba(255,255,255,.94);
+    border-radius:24px;
+    padding:20px 30px;
+    box-shadow:0 16px 40px rgba(0,0,0,.32);
+    display:flex;flex-direction:column;
+    gap:6px;align-items:center;
+    min-width:min(70%,300px);
+  }
+  .label{
+    font-size:11px;letter-spacing:3px;
+    text-transform:uppercase;color:#888;font-weight:800;
+  }
+  .big{
+    font-size:clamp(34px,10vw,60px);
+    font-weight:900;color:#e03131;line-height:1;
+  }
+  .best{
+    font-size:clamp(14px,4vw,18px);
+    font-weight:800;color:#495057;margin-top:4px;
+  }
+  .emoji{
+    font-size:clamp(28px,8vw,42px);
+    line-height:1;
+  }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="../index.html">← Back to Home</a>
+<h1>Flappy Cardinal 3D</h1>
+<p class="lead">Burung kardinal 3D dengan suara kentut legendaris. Tap untuk terbang, hindari pipa hijau, dan pecahkan rekor skor tertinggi kamu!</p>
+
+<main>
+  <section>
+    <div class="game-wrap" id="gameWrap">
+      <canvas id="game"></canvas>
+
+      <div id="hud">
+        <div id="score">0</div>
+      </div>
+
+      <!-- MENU -->
+      <div class="panel" id="menu">
+        <div class="title">FLAPPY<br>CARDINAL<small>3 D</small></div>
+        <div class="sub">🐦 Burung Kardinal • 💨 Suara Kentut</div>
+        <div class="tap">TAP UNTUK TERBANG</div>
+      </div>
+
+      <!-- GAME OVER -->
+      <div class="panel hidden" id="gameover">
+        <div class="emoji">💨😵</div>
+        <div class="card">
+          <div class="label">Skor</div>
+          <div class="big" id="finalScore">0</div>
+          <div class="best">🏆 Terbaik: <span id="bestScore">0</span></div>
+        </div>
+        <div class="tap">TAP UNTUK MAIN LAGI</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><p>&copy; 2026 — Games Collection</p></footer>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* =========================================================
+   RENDERER / SCENE / CAMERA
+   ========================================================= */
+const wrap   = document.getElementById('gameWrap');
+const canvas = document.getElementById('game');
+
+const renderer = new THREE.WebGLRenderer({
+  canvas, antialias: true, powerPreference: 'high-performance', alpha: false
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x8fd3f4);
+scene.fog = new THREE.Fog(0x9ddcf5, 60, 155);
+
+const camera = new THREE.PerspectiveCamera(60, 3 / 4, 0.1, 500);
+camera.position.set(0, 4, 11);
+camera.lookAt(0, 0.2, -10);
+
+/* ---------- LIGHTS ---------- */
+scene.add(new THREE.HemisphereLight(0xffffff, 0x5a8f4a, 1.15));
+const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+sun.position.set(6, 14, 8);
+scene.add(sun);
+scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+
+/* =========================================================
+   WORLD CONFIG
+   ========================================================= */
+const CFG = {
+  groundY: -5.5,
+  deathY: -3.7,
+  birdRestY: -4.75,
+  pipeRadius: 1.05,
+  pipeGap: 5.0,
+  spacing: 15.5,
+  baseSpeed: 13,
+  gravity: -24,
+  flapVel: 8.5
+};
+
+/* =========================================================
+   GROUND
+   ========================================================= */
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(320, 420),
+  new THREE.MeshStandardMaterial({ color: 0x74c257, roughness: 1 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.set(0, CFG.groundY, -110);
+scene.add(ground);
+
+/* =========================================================
+   BIRD — CARDINAL
+   ========================================================= */
+const BIRD_MAT = {
+  red:    new THREE.MeshStandardMaterial({ color: 0xdd1c1a, roughness: 0.62, metalness: 0.02 }),
+  redDark:new THREE.MeshStandardMaterial({ color: 0xa81111, roughness: 0.7 }),
+  black:  new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.55 }),
+  orange: new THREE.MeshStandardMaterial({ color: 0xff9f1c, roughness: 0.45 }),
+  white:  new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 }),
+  eye:    new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.15 })
+};
+
+const bird = new THREE.Group();
+scene.add(bird);
+
+const bodyMesh = new THREE.Mesh(new THREE.SphereGeometry(0.65, 18, 14), BIRD_MAT.red);
+bodyMesh.scale.set(1.0, 0.95, 1.28);
+bird.add(bodyMesh);
+
+const head = new THREE.Mesh(new THREE.SphereGeometry(0.50, 16, 12), BIRD_MAT.red);
+head.position.set(0, 0.42, -0.58);
+bird.add(head);
+
+const crest = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.85, 9), BIRD_MAT.red);
+crest.position.set(0, 1.02, -0.44);
+crest.rotation.x = -0.45;
+bird.add(crest);
+const crest2 = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.5, 7), BIRD_MAT.redDark);
+crest2.position.set(0, 0.95, -0.22);
+crest2.rotation.x = -0.9;
+bird.add(crest2);
+
+const mask = new THREE.Mesh(new THREE.SphereGeometry(0.40, 14, 11), BIRD_MAT.black);
+mask.scale.set(1.08, 0.92, 0.72);
+mask.position.set(0, 0.40, -0.86);
+bird.add(mask);
+
+const beak = new THREE.Mesh(new THREE.ConeGeometry(0.20, 0.52, 9), BIRD_MAT.orange);
+beak.rotation.x = -Math.PI / 2;
+beak.position.set(0, 0.36, -1.24);
+bird.add(beak);
+
+[-1, 1].forEach(s => {
+  const w = new THREE.Mesh(new THREE.SphereGeometry(0.135, 12, 10), BIRD_MAT.white);
+  w.position.set(s * 0.215, 0.56, -0.88);
+  bird.add(w);
+  const p = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), BIRD_MAT.eye);
+  p.position.set(s * 0.235, 0.565, -0.97);
+  bird.add(p);
+  const gl = new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 6), BIRD_MAT.white);
+  gl.position.set(s * 0.245, 0.605, -1.015);
+  bird.add(gl);
+});
+
+const tail = new THREE.Mesh(new THREE.ConeGeometry(0.34, 1.15, 4), BIRD_MAT.redDark);
+tail.rotation.x = Math.PI / 2;
+tail.position.set(0, 0.05, 0.92);
+tail.rotation.z = Math.PI / 4;
+bird.add(tail);
+
+const wingGeo = new THREE.SphereGeometry(0.5, 10, 8);
+const wingMat = new THREE.MeshStandardMaterial({ color: 0xb91414, roughness: 0.65 });
+
+const leftPivot = new THREE.Group();
+leftPivot.position.set(-0.34, 0.15, 0.05);
+const lw = new THREE.Mesh(wingGeo, wingMat);
+lw.scale.set(1.05, 0.28, 0.78);
+lw.position.set(-0.48, -0.08, 0.02);
+leftPivot.add(lw);
+bird.add(leftPivot);
+
+const rightPivot = new THREE.Group();
+rightPivot.position.set(0.34, 0.15, 0.05);
+const rw = new THREE.Mesh(wingGeo, wingMat);
+rw.scale.set(1.05, 0.28, 0.78);
+rw.position.set(0.48, -0.08, 0.02);
+rightPivot.add(rw);
+bird.add(rightPivot);
+
+/* =========================================================
+   PIPES
+   ========================================================= */
+const pipeMat = new THREE.MeshStandardMaterial({ color: 0x3ddc84, roughness: 0.55, metalness: 0.06 });
+const capMat  = new THREE.MeshStandardMaterial({ color: 0x27b56b, roughness: 0.5,  metalness: 0.08 });
+const PIPE_H = 80;
+
+function makePipe() {
+  const g = new THREE.Group();
+  const top    = new THREE.Mesh(new THREE.CylinderGeometry(CFG.pipeRadius, CFG.pipeRadius, PIPE_H, 14), pipeMat);
+  const bot    = new THREE.Mesh(new THREE.CylinderGeometry(CFG.pipeRadius, CFG.pipeRadius, PIPE_H, 14), pipeMat);
+  const topCap = new THREE.Mesh(new THREE.CylinderGeometry(CFG.pipeRadius * 1.26, CFG.pipeRadius * 1.26, 1.0, 14), capMat);
+  const botCap = new THREE.Mesh(new THREE.CylinderGeometry(CFG.pipeRadius * 1.26, CFG.pipeRadius * 1.26, 1.0, 14), capMat);
+  g.add(top, bot, topCap, botCap);
+  g.userData = { top, bot, topCap, botCap };
+  return g;
+}
+
+function setPipeGap(g, gap, centerY) {
+  const half = gap / 2;
+  g.userData.top.position.y    =  half + PIPE_H / 2;
+  g.userData.topCap.position.y =  half + 0.5;
+  g.userData.bot.position.y    = -half - PIPE_H / 2;
+  g.userData.botCap.position.y = -half - 0.5;
+  g.position.y = centerY;
+}
+
+let pipes = [];
+function clearPipes() {
+  pipes.forEach(p => scene.remove(p.group));
+  pipes = [];
+}
+
+/* =========================================================
+   DECORATION
+   ========================================================= */
+const treeTrunkMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 1 });
+const treeLeafMat  = new THREE.MeshStandardMaterial({ color: 0x2f9e44, roughness: 1 });
+const treeLeafMat2 = new THREE.MeshStandardMaterial({ color: 0x37b24d, roughness: 1 });
+const cloudMat     = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
+
+function makeTree() {
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.34, 1.6, 6), treeTrunkMat);
+  trunk.position.y = 0.8;
+  const l1 = new THREE.Mesh(new THREE.ConeGeometry(1.35, 2.6, 7), treeLeafMat);
+  l1.position.y = 2.2;
+  const l2 = new THREE.Mesh(new THREE.ConeGeometry(1.0, 2.1, 7), treeLeafMat2);
+  l2.position.y = 3.4;
+  g.add(trunk, l1, l2);
+  return g;
+}
+
+function makeCloud() {
+  const g = new THREE.Group();
+  const n = 3 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < n; i++) {
+    const s = 1.1 + Math.random() * 1.4;
+    const m = new THREE.Mesh(new THREE.SphereGeometry(s, 7, 6), cloudMat);
+    m.position.set((i - n / 2) * 1.5 + Math.random() * 0.7,
+                   (Math.random() - 0.4) * 0.9,
+                   (Math.random() - 0.5) * 1.6);
+    g.add(m);
+  }
+  return g;
+}
+
+const movers = [];
+
+for (let i = 0; i < 26; i++) {
+  const t = makeTree();
+  const side = Math.random() < 0.5 ? -1 : 1;
+  t.position.set(side * (10 + Math.random() * 24), CFG.groundY, -Math.random() * 220 + 20);
+  t.scale.setScalar(0.75 + Math.random() * 0.9);
+  t.userData.type = 'tree';
+  scene.add(t);
+  movers.push(t);
+}
+
+for (let i = 0; i < 16; i++) {
+  const c = makeCloud();
+  c.position.set((Math.random() - 0.5) * 80, 6 + Math.random() * 13, -Math.random() * 220 + 20);
+  c.userData.type = 'cloud';
+  scene.add(c);
+  movers.push(c);
+}
+
+/* =========================================================
+   AUDIO
+   ========================================================= */
+let actx = null, master = null, musicGain = null, sfxGain = null;
+let musicOn = false, stepIdx = 0, nextTime = 0, schedTimer = null;
+
+const BPM = 138;
+const STEP_DUR = 60 / BPM / 2;
+
+const MELODY = [
+  659, 784, 880, 784,  659, 587, 523, 587,
+  659, 784, 880, 1047, 880, 784, 659, 587,
+  523, 659, 784, 659,  523, 494, 440, 494,
+  523, 659, 880, 784,  659, 587, 523, 0
+];
+const BASS = [130.81, 130.81, 110.00, 110.00, 87.31, 87.31, 98.00, 98.00];
+
+function audioInit() {
+  if (actx) {
+    if (actx.state === 'suspended') actx.resume();
+    return;
+  }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  actx = new AC();
+
+  master = actx.createGain();
+  master.gain.value = 0.85;
+  master.connect(actx.destination);
+
+  musicGain = actx.createGain();
+  musicGain.gain.value = 0.13;
+  musicGain.connect(master);
+
+  sfxGain = actx.createGain();
+  sfxGain.gain.value = 0.5;
+  sfxGain.connect(master);
+
+  nextTime = actx.currentTime + 0.1;
+  schedTimer = setInterval(scheduler, 25);
+}
+
+function startMusic() {
+  if (!actx) return;
+  musicOn = true;
+  stepIdx = 0;
+  nextTime = actx.currentTime + 0.08;
+}
+
+function scheduler() {
+  if (!actx || !musicOn) return;
+  while (nextTime < actx.currentTime + 0.18) {
+    scheduleStep(stepIdx, nextTime);
+    nextTime += STEP_DUR;
+    stepIdx = (stepIdx + 1) % 32;
+  }
+}
+
+function scheduleStep(i, t) {
+  const f = MELODY[i];
+  if (f) {
+    const o = actx.createOscillator();
+    o.type = 'square';
+    o.frequency.value = f;
+    const g = actx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.42, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + STEP_DUR * 0.95);
+    o.connect(g); g.connect(musicGain);
+    o.start(t); o.stop(t + STEP_DUR);
+  }
+  if (i % 4 === 0) {
+    const b = BASS[i / 4];
+    const o = actx.createOscillator();
+    o.type = 'triangle';
+    o.frequency.value = b;
+    const g = actx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.85, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + STEP_DUR * 3.6);
+    o.connect(g); g.connect(musicGain);
+    o.start(t); o.stop(t + STEP_DUR * 4);
+  }
+}
+
+function playFart(pitch = 1) {
+  if (!actx) return;
+  const t = actx.currentTime;
+  const base = (95 + Math.random() * 60) * pitch;
+
+  const o = actx.createOscillator();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(base, t);
+  o.frequency.exponentialRampToValueAtTime(base * 0.32, t + 0.32);
+
+  const lfo = actx.createOscillator();
+  lfo.type = 'square';
+  lfo.frequency.setValueAtTime(16 + Math.random() * 26, t);
+  lfo.frequency.linearRampToValueAtTime(7, t + 0.32);
+
+  const lfoGain = actx.createGain();
+  lfoGain.gain.setValueAtTime(base * 0.75, t);
+  lfoGain.gain.exponentialRampToValueAtTime(2, t + 0.32);
+  lfo.connect(lfoGain);
+  lfoGain.connect(o.frequency);
+
+  const filt = actx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.Q.value = 7;
+  filt.frequency.setValueAtTime(1400, t);
+  filt.frequency.exponentialRampToValueAtTime(280, t + 0.36);
+
+  const g = actx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.55, t + 0.014);
+  g.gain.exponentialRampToValueAtTime(0.0008, t + 0.42);
+
+  o.connect(filt); filt.connect(g); g.connect(sfxGain);
+  o.start(t); lfo.start(t);
+  o.stop(t + 0.48); lfo.stop(t + 0.48);
+}
+
+function playBigFart() {
+  if (!actx) return;
+  const t = actx.currentTime;
+
+  const o = actx.createOscillator();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(150, t);
+  o.frequency.exponentialRampToValueAtTime(42, t + 0.95);
+
+  const lfo = actx.createOscillator();
+  lfo.type = 'square';
+  lfo.frequency.setValueAtTime(24, t);
+  lfo.frequency.exponentialRampToValueAtTime(5, t + 0.95);
+  const lg = actx.createGain();
+  lg.gain.setValueAtTime(70, t);
+  lg.gain.exponentialRampToValueAtTime(4, t + 0.95);
+  lfo.connect(lg); lg.connect(o.frequency);
+
+  const filt = actx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.Q.value = 5;
+  filt.frequency.setValueAtTime(1000, t);
+  filt.frequency.exponentialRampToValueAtTime(160, t + 0.95);
+
+  const g = actx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.7, t + 0.03);
+  g.gain.setValueAtTime(0.7, t + 0.72);
+  g.gain.exponentialRampToValueAtTime(0.0008, t + 1.05);
+
+  o.connect(filt); filt.connect(g); g.connect(sfxGain);
+  o.start(t); lfo.start(t);
+  o.stop(t + 1.15); lfo.stop(t + 1.15);
+}
+
+function playSqueak() {
+  if (!actx) return;
+  const t = actx.currentTime;
+  const o = actx.createOscillator();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(650, t);
+  o.frequency.exponentialRampToValueAtTime(1500, t + 0.07);
+  o.frequency.exponentialRampToValueAtTime(950, t + 0.17);
+  const g = actx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.3, t + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0008, t + 0.2);
+  o.connect(g); g.connect(sfxGain);
+  o.start(t); o.stop(t + 0.22);
+}
+
+/* =========================================================
+   GAME STATE
+   ========================================================= */
+let state = 'ready';
+let score = 0;
+let best = parseInt(localStorage.getItem('flappyCardinalBest') || '0', 10);
+let birdY = 0;
+let birdVel = 0;
+let wingPhase = 0;
+let spawnTimer = 0;
+let deadTimer = 0;
+let worldSpeed = 7;
+
+const scoreEl = document.getElementById('score');
+const menuEl  = document.getElementById('menu');
+const overEl  = document.getElementById('gameover');
+const finalEl = document.getElementById('finalScore');
+const bestEl  = document.getElementById('bestScore');
+
+bestEl.textContent = best;
+
+function showMenu() {
+  menuEl.classList.remove('hidden');
+  overEl.classList.add('hidden');
+  scoreEl.classList.remove('show');
+}
+function showGameOver() {
+  menuEl.classList.add('hidden');
+  overEl.classList.remove('hidden');
+  finalEl.textContent = score;
+  bestEl.textContent = best;
+}
+
+function resetGame() {
+  clearPipes();
+  score = 0;
+  scoreEl.textContent = '0';
+  birdY = 0;
+  birdVel = 0;
+  deadTimer = 0;
+  spawnTimer = 0.9;
+  state = 'ready';
+  worldSpeed = 7;
+  bird.position.set(0, birdY, 0);
+  bird.rotation.set(0, 0, 0);
+  showMenu();
+}
+
+function startGame() {
+  if (!actx) audioInit();
+  startMusic();
+  state = 'play';
+  score = 0;
+  scoreEl.textContent = '0';
+  scoreEl.classList.add('show');
+  menuEl.classList.add('hidden');
+  overEl.classList.add('hidden');
+  birdY = 0;
+  birdVel = 0;
+  spawnTimer = 0.65;
+  clearPipes();
+  flap();
+}
+
+function flap() {
+  birdVel = CFG.flapVel;
+  wingPhase = 0;
+  playFart(1 + Math.random() * 0.35);
+}
+
+function die() {
+  if (state !== 'play') return;
+  state = 'dead';
+  deadTimer = 0;
+  playBigFart();
+  if (score > best) {
+    best = score;
+    localStorage.setItem('flappyCardinalBest', String(best));
+  }
+  setTimeout(showGameOver, 550);
+}
+
+/* =========================================================
+   INPUT — terpasang pada wrapper game (bukan seluruh window)
+   ========================================================= */
+function onTap(e) {
+  if (e && e.cancelable) e.preventDefault();
+  audioInit();
+
+  if (state === 'ready') {
+    startGame();
+  } else if (state === 'play') {
+    flap();
+  } else if (state === 'dead') {
+    if (deadTimer > 0.75) {
+      resetGame();
+      startGame();
+    }
+  }
+}
+
+wrap.addEventListener('pointerdown', onTap, { passive: false });
+wrap.addEventListener('touchstart', e => { e.preventDefault(); }, { passive: false });
+wrap.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('gesturestart', e => e.preventDefault());
+
+/* =========================================================
+   RESIZE — pakai dimensi wrapper, bukan viewport
+   ========================================================= */
+function onResize() {
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  if (!w || !h) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+}
+window.addEventListener('resize', onResize);
+window.addEventListener('orientationchange', () => setTimeout(onResize, 250));
+
+/* =========================================================
+   GAME LOOP
+   ========================================================= */
+const clock = new THREE.Clock();
+
+function update(dt) {
+  if (state === 'play') {
+    worldSpeed = CFG.baseSpeed + Math.min(score * 0.16, 4.5);
+  } else if (state === 'ready') {
+    worldSpeed = 7;
+  } else {
+    worldSpeed = 0;
+  }
+
+  for (const m of movers) {
+    m.position.z += worldSpeed * dt;
+    if (m.position.z > 30) {
+      m.position.z -= 240;
+      if (m.userData.type === 'tree') {
+        const side = Math.random() < 0.5 ? -1 : 1;
+        m.position.x = side * (10 + Math.random() * 24);
+        m.scale.setScalar(0.75 + Math.random() * 0.9);
+      } else {
+        m.position.x = (Math.random() - 0.5) * 80;
+        m.position.y = 6 + Math.random() * 13;
+      }
+    }
+  }
+
+  if (state === 'ready') {
+    birdY = Math.sin(performance.now() * 0.003) * 0.45;
+    birdVel = 0;
+    bird.position.y = birdY;
+    bird.rotation.x = Math.sin(performance.now() * 0.003) * 0.12;
+  } else if (state === 'play') {
+    birdVel += CFG.gravity * dt;
+    birdY += birdVel * dt;
+
+    if (birdY > 10.5) { birdY = 10.5; birdVel = Math.min(birdVel, 0); }
+    if (birdY < CFG.deathY) {
+      birdY = CFG.deathY;
+      bird.position.y = birdY;
+      die();
+    }
+
+    bird.position.y = birdY;
+    bird.rotation.x = THREE.MathUtils.clamp(birdVel * 0.075, -0.7, 0.55);
+    bird.rotation.z = THREE.MathUtils.clamp(-birdVel * 0.012, -0.15, 0.15);
+  } else if (state === 'dead') {
+    deadTimer += dt;
+    birdVel += CFG.gravity * 1.35 * dt;
+    birdY += birdVel * dt;
+    if (birdY < CFG.birdRestY) {
+      birdY = CFG.birdRestY;
+      birdVel = 0;
+    }
+    bird.position.y = birdY;
+    bird.rotation.x += (1.25 - bird.rotation.x) * Math.min(dt * 5, 1);
+  }
+
+  const flapSpeed = (state === 'play' ? 26 : 11);
+  wingPhase += dt * flapSpeed;
+  const wa = Math.sin(wingPhase) * 0.95;
+  leftPivot.rotation.z  = -wa;
+  rightPivot.rotation.z =  wa;
+
+  if (state === 'play') {
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      const gap = Math.max(4.1, CFG.pipeGap - score * 0.045);
+      const minC = -1.0 + gap / 2;
+      const maxC =  5.2 - gap / 2;
+      const centerY = minC + Math.random() * Math.max(0.5, maxC - minC);
+
+      const g = makePipe();
+      setPipeGap(g, gap, centerY);
+      g.position.x = 0;
+      g.position.z = -72;
+      scene.add(g);
+      pipes.push({ group: g, gap, passed: false });
+
+      spawnTimer += CFG.spacing / worldSpeed;
+    }
+
+    for (let i = pipes.length - 1; i >= 0; i--) {
+      const p = pipes[i];
+      const g = p.group;
+      g.position.z += worldSpeed * dt;
+
+      const dz = Math.abs(g.position.z);
+      if (dz < CFG.pipeRadius + 0.52) {
+        const half = p.gap / 2;
+        const topEdge = g.position.y + half;
+        const botEdge = g.position.y - half;
+        if (birdY + 0.45 > topEdge || birdY - 0.45 < botEdge) {
+          die();
+        }
+      }
+
+      if (!p.passed && g.position.z > 0) {
+        p.passed = true;
+        score++;
+        scoreEl.textContent = score;
+        scoreEl.style.transform = 'scale(1.22)';
+        setTimeout(() => { scoreEl.style.transform = 'scale(1)'; }, 110);
+        playSqueak();
+      }
+
+      if (g.position.z > 14) {
+        scene.remove(g);
+        pipes.splice(i, 1);
+      }
+    }
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  update(dt);
+  renderer.render(scene, camera);
+}
+
+/* =========================================================
+   START
+   ========================================================= */
+resetGame();
+onResize();
+animate();
+</script>
+
+</body>
+</html>
