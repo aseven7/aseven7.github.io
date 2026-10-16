@@ -1,0 +1,40 @@
+name: Build Pages Manifest
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'pages/**'
+      - 'build.py'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history so git log dates work
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate pages.json
+        run: python build.py
+
+      - name: Commit & push pages.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pages.json
+          # Only commit if there are changes
+          git diff --cached --quiet || git commit -m "chore: update pages.json [skip ci]"
+          git push
